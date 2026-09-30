@@ -1,972 +1,278 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>물고기 키우기</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111111">
+<meta name="description" content="Korea Survival Kit - A tiny guide for traveling and living in Korea.">
+<title>Korea Survival Kit 🇰🇷</title>
 <style>
-:root{--bg1:#0b2140;--bg2:#0e3a63;--tank1:#12588f;--tank2:#082744;--fg:#eaf4ff;--accent:#ffd166;--accent2:#ffb703;--danger:#ef476f;--good:#2dd4bf}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-html,body{margin:0;height:100%;background:var(--bg1);color:var(--fg);font-family:'Jua','Segoe UI',sans-serif;overscroll-behavior:none}
-#app{display:flex;height:100vh;overflow:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-#sidebar{width:108px;flex:0 0 auto;background:#0a1c33;padding:12px 8px;display:flex;flex-direction:column;gap:8px;box-shadow:2px 0 14px #00000055;z-index:4;overflow-y:auto}
-.pill{background:linear-gradient(#ffffff22,#ffffff0d);border-radius:14px;padding:8px 4px;text-align:center;font-size:12px;font-weight:700;box-shadow:inset 0 0 0 1px #ffffff22;display:flex;align-items:center;justify-content:center;gap:5px}
-.pill b{font-size:15px}
-#sidebar button{width:100%;padding:10px 4px;font-size:12px;border-radius:12px;background:linear-gradient(#ffffff26,#ffffff0d);color:var(--fg);border:none;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:inset 0 0 0 1px #ffffff2a,0 3px 0 #00000033}
-#sidebar button:active{transform:translateY(2px);box-shadow:inset 0 0 0 1px #ffffff2a}
-#sidebar button.locked{opacity:.55}
-#shopPanel{width:0;flex:0 0 auto;background:linear-gradient(#173a5e,#0e2846);overflow:hidden;transition:width .25s ease;box-shadow:2px 0 14px #00000055;z-index:3}
-#shopPanel.open{width:320px;max-width:78vw;overflow-y:auto;overflow-x:hidden}
-#main{flex:1;position:relative;padding:14px;min-width:0}
-#tank{position:absolute;inset:14px;background:linear-gradient(var(--tank1),var(--tank2));border-radius:20px;overflow:hidden;touch-action:manipulation;box-shadow:inset 0 0 50px #00000066,0 0 0 3px #ffffff1a}
-#bossBar{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#000000aa;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:5;white-space:nowrap;box-shadow:inset 0 0 0 1px #ffffff22}
-@media (max-width:640px){
-#app{flex-direction:column}
-#sidebar{width:100%;flex-direction:row;flex-wrap:wrap;align-items:center}
-.pill{flex:1 1 70px}
-#sidebar button{flex:1 1 70px;width:auto}
-#shopPanel{width:auto;flex:0 0 auto;max-height:0;overflow:hidden;transition:max-height .25s ease}
-#shopPanel.open{width:100%;max-width:100%;max-height:44vh;overflow-y:auto;overflow-x:hidden}
-#main{padding:10px;flex:1;min-height:0}
-}
-.bubble{position:absolute;bottom:-20px;width:10px;height:10px;background:#ffffff40;border-radius:50%;animation:rise linear infinite}
-@keyframes rise{0%{transform:translateY(0);opacity:.8}100%{transform:translateY(-100%);opacity:0}}
-.seaweed{position:absolute;bottom:0;border-radius:45% 45% 4px 4px/65% 65% 4px 4px;transform-origin:bottom center;animation:sway ease-in-out infinite;background:linear-gradient(#3aa66b,#1f6b45)}
-@keyframes sway{0%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}100%{transform:rotate(-7deg)}}
-.rock{position:absolute;bottom:0;background:radial-gradient(circle at 30% 25%,#5b6b7a,#2c3841);border-radius:50% 50% 45% 45%/60% 60% 35% 35%}
-.reefEgg{position:absolute;bottom:2px;font-size:26px;opacity:.9;filter:drop-shadow(0 2px 3px #00000066)}
-.fish{position:absolute;cursor:pointer;user-select:none;transform:translate(-50%,-50%) scaleX(var(--dir,1));transition:left .12s linear,top .12s linear;filter:drop-shadow(0 3px 4px #00000055);z-index:2}
-.fish.hungry{filter:drop-shadow(0 3px 4px #00000055) grayscale(0.7) brightness(0.65)}
-.fish.eating{animation:eat .35s ease}
-@keyframes eat{0%{transform:translate(-50%,-50%) scaleX(var(--dir,1)) scale(1)}40%{transform:translate(-50%,-50%) scaleX(var(--dir,1)) scale(1.3)}100%{transform:translate(-50%,-50%) scaleX(var(--dir,1)) scale(1)}}
-.growthbar{position:absolute;width:30px;height:5px;background:#00000055;border-radius:4px;transform:translate(-50%,0);overflow:hidden;transition:left .12s linear,top .12s linear;z-index:2}
-.growthbar i{display:block;height:100%;background:var(--good);width:0%}
-.food{position:absolute;width:12px;height:12px;background:radial-gradient(#fff6c8,#ffd166);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 6px #ffd16688;z-index:2}
-.coin{position:absolute;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8d6,#ffd700 45%,#b8860b 100%);box-shadow:inset 0 0 0 2px #8a6200aa,0 2px 4px #00000066;transform:translate(-50%,-50%);cursor:pointer;animation:pop .25s ease;z-index:2}
-.coinIcon{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8d6,#ffd700 45%,#b8860b 100%);box-shadow:inset 0 0 0 2px #8a6200aa}
-.gem{position:absolute;font-size:22px;transform:translate(-50%,-50%);cursor:pointer;animation:pop .25s ease;z-index:2}
-@keyframes pop{0%{transform:translate(-50%,-50%) scale(0.2)}100%{transform:translate(-50%,-50%) scale(1)}}
-.invader{position:absolute;font-size:34px;transform:translate(-50%,-50%);cursor:pointer;animation:ibob 1.4s ease-in-out infinite;filter:drop-shadow(0 3px 6px #000000aa);z-index:2}
-.boss{position:absolute;font-size:58px;cursor:pointer;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 10px #000000aa) drop-shadow(0 0 16px #ff3b3bcc);z-index:2;animation:ibob 1.8s ease-in-out infinite}
-@keyframes ibob{0%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-8px)}100%{transform:translate(-50%,-50%) translateY(0)}}
-.hpbar{position:absolute;height:6px;background:#00000066;border-radius:4px;transform:translate(-50%,0);overflow:hidden;z-index:2}
-.hpbar i{display:block;height:100%;background:var(--danger)}
-.floatText{position:absolute;font-weight:700;pointer-events:none;transform:translate(-50%,-50%);animation:floatUp .9s ease forwards;text-shadow:0 2px 4px #000000cc;white-space:nowrap;z-index:3}
-@keyframes floatUp{0%{transform:translate(-50%,-50%) translateY(0) scale(1);opacity:1}100%{transform:translate(-50%,-50%) translateY(-55px) scale(1.1);opacity:0}}
-#shopInner{padding:16px;width:100%}
-.panelHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.panelHeader span{font-size:18px}
-.closeBtn{padding:6px 12px;border-radius:10px;background:linear-gradient(#ffffff26,#ffffff0d);color:var(--fg);border:none;font-family:inherit;font-weight:700;cursor:pointer}
-.subTabs{display:flex;gap:6px;margin-bottom:14px}
-.subTabs button{flex:1;padding:9px 2px;font-size:12px;border-radius:10px;background:#ffffff14;color:var(--fg);border:none;font-family:inherit;font-weight:700;cursor:pointer}
-.subTabs button.active{background:linear-gradient(#ffd166,#ffb703);color:#3a2600}
-h4{margin:14px 0 8px;font-size:14px;opacity:.85}
-.shopItem{display:flex;justify-content:space-between;align-items:center;padding:12px 10px;border-radius:14px;margin-bottom:8px;background:#ffffff0d;gap:8px}
-.shopItem .icon{font-size:24px;margin-right:8px}
-.shopItem .info{display:flex;align-items:center;flex:1;min-width:0}
-.shopItem small{opacity:.8;display:block;font-size:11px;line-height:1.5}
-.shopItem button{padding:10px 16px;border-radius:12px;background:linear-gradient(#ffffff26,#ffffff0d);color:var(--fg);border:none;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:inset 0 0 0 1px #ffffff2a}
-.shopItem button:disabled{opacity:.4;cursor:not-allowed}
-.dexBonus{background:#ffffff14;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.dexCard{background:#ffffff0d;border-radius:12px;padding:10px 4px;text-align:center}
-.dexCard.locked{opacity:.35}
-.dexCard .emoji{font-size:26px;display:block}
-.dexCard .nm{font-size:11px;display:block;margin-top:2px}
-.dexCard .stage{font-size:10px;opacity:.85;margin-top:3px;display:block;color:var(--good)}
-#toast{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:#000000d9;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
-#toast.show{opacity:1}
+:root{--bg:#f6f6f4;--card:#fff;--text:#161616;--muted:#777;--line:#e8e8e5;--dark:#111;--soft:#f0f0ed}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif}
+button,input{font:inherit}
+.app{width:100%;max-width:760px;margin:auto;padding:14px 14px 28px;min-height:100dvh}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.brand{font-weight:900;font-size:14px}
+.lang{display:flex;background:#e9e9e6;border-radius:999px;padding:3px}
+.lang button{border:0;background:transparent;border-radius:999px;padding:7px 11px;font-size:12px;cursor:pointer}
+.lang button.active{background:#111;color:#fff}
+.hero{padding:28px 4px 24px}
+.flag{font-size:48px}
+h1{font-size:38px;letter-spacing:-1.8px;margin:8px 0}
+.hero p{color:var(--muted);margin:0;line-height:1.5}
+.search{display:flex;gap:8px;margin-bottom:16px}
+.search input{flex:1;border:1px solid var(--line);border-radius:15px;background:#fff;padding:14px 16px;outline:0}
+.search button{border:0;background:#111;color:#fff;border-radius:15px;padding:0 18px;font-weight:800;cursor:pointer}
+.modules{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:18px}
+.module{border:1px solid var(--line);background:#fff;border-radius:16px;padding:13px;text-align:left;cursor:pointer;min-height:88px;transition:.15s}
+.module:hover{transform:translateY(-2px);box-shadow:0 8px 22px #0000000d}
+.module .icon{font-size:25px;margin-bottom:9px}
+.module strong{display:block;font-size:14px}
+.module span{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.section-head{display:flex;justify-content:space-between;align-items:end;margin:8px 0 10px}
+.section-head h2{font-size:18px;margin:0}
+.count{font-size:12px;color:#999}
+.filters{display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;padding:2px 1px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.filters::-webkit-scrollbar{display:none}
+.filter{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;color:#666;cursor:pointer}
+.filter.active{background:#111;color:#fff;border-color:#111}
+.cards{display:flex;flex-direction:column;gap:9px;max-height:52dvh;overflow-y:auto;padding:1px 3px 8px 1px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;flex:0 0 auto;transition:.15s}.card:hover{transform:translateY(-1px);box-shadow:0 8px 22px #0000000b}
+.card .ko{font-size:21px;font-weight:900;margin-bottom:7px}
+.card .en{font-size:13px}
+.card .zh{font-size:12px;color:#888;margin-top:4px}
+.card .tag{display:inline-block;background:var(--soft);border-radius:7px;padding:4px 7px;font-size:10px;color:#777;margin-top:12px}
+.random{width:100%;border:0;border-radius:16px;background:#111;color:#fff;padding:15px;margin-top:16px;font-weight:800;cursor:pointer}
+.footer{text-align:center;color:#aaa;font-size:11px;margin-top:20px;line-height:1.7}
+.empty{grid-column:1/-1;text-align:center;color:#999;padding:45px 10px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:20;backdrop-filter:blur(3px)}
+.modal.show{display:flex}
+.sheet{width:min(700px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:25px;padding:22px;box-shadow:0 24px 80px #0003}
+.close{float:right;width:35px;height:35px;border:0;border-radius:50%;background:#eee;font-size:21px;cursor:pointer}
+.modal-title{font-size:31px;font-weight:900;margin:12px 0 3px;padding-right:45px}
+.literal{color:#777;font-size:13px}
+.block{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+.label{font-size:10px;color:#999;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.value{font-size:14px;line-height:1.6}
+.bilingual{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.langbox{background:#f6f6f4;border-radius:14px;padding:12px}
+.langbox b{display:block;font-size:10px;color:#999;margin-bottom:5px}
+.langbox div{font-size:13px;line-height:1.5}
+@media(max-width:520px){.app{padding:10px 10px 22px}.top{margin-bottom:10px}.brand{font-size:12px}.lang button{padding:6px 8px;font-size:10px}.hero{padding:16px 3px 16px}.flag{font-size:38px}h1{font-size:29px;margin:6px 0}.hero p{font-size:13px}.search input{padding:12px 13px}.search button{padding:0 14px}.modules{grid-template-columns:repeat(2,1fr);gap:7px}.module{min-height:78px;padding:11px}.module .icon{font-size:21px;margin-bottom:6px}.module strong{font-size:12px}.module span{font-size:9px}.cards{max-height:48dvh}.bilingual{grid-template-columns:1fr}.modal-title{font-size:27px}}
 </style>
 </head>
 <body>
-<div id="app">
-<div id="sidebar">
-<div class="pill"><span class="coinIcon"></span><b id="coinDisplay">0</b></div>
-<div class="pill">💎<b id="diaDisplay">0</b></div>
-<div class="pill">🐠<b id="fishDisplay">0</b></div>
-<button onclick="openShop()">🛒 상점</button>
-<button onclick="openDex()">📖 도감</button>
-<button id="feedBtn" onclick="onFeedAllClick()">🔒 먹이주기</button>
-<button onclick="openSettings()">⚙️ 설정</button>
+<div class="app">
+  <div class="top">
+    <div class="brand">🇰🇷 KOREA SURVIVAL KIT</div>
+    <div class="lang">
+      <button id="enBtn" class="active" onclick="setLang('en')">English</button>
+      <button id="zhBtn" onclick="setLang('zh')">中文</button>
+    </div>
+  </div>
+  <section class="hero"><div class="flag">🇰🇷</div><h1 id="title"></h1><p id="subtitle"></p></section>
+  <div class="search"><input id="search" onkeydown="if(event.key==='Enter')doSearch()"><button onclick="doSearch()" id="searchBtn"></button></div>
+  <div class="modules">
+    <button class="module" onclick="selectCategory('Phrases')"><div class="icon">🗣️</div><strong id="modPhrases"></strong><span id="modPhrasesSub"></span></button>
+    <button class="module" onclick="selectCategory('Slang')"><div class="icon">😂</div><strong id="modSlang"></strong><span id="modSlangSub"></span></button>
+    <button class="module" onclick="selectCategory('Food')"><div class="icon">🍜</div><strong id="modFood"></strong><span id="modFoodSub"></span></button>
+    <button class="module" onclick="selectCategory('Money')"><div class="icon">💰</div><strong id="modMoney"></strong><span id="modMoneySub"></span></button>
+    <button class="module" onclick="selectCategory('Culture')"><div class="icon">🍻</div><strong id="modCulture"></strong><span id="modCultureSub"></span></button>
+    <button class="module" onclick="selectCategory('Subway')"><div class="icon">🚇</div><strong id="modSubway"></strong><span id="modSubwaySub"></span></button>
+  </div>
+  <div class="section-head"><h2 id="listTitle"></h2><span class="count" id="count"></span></div>
+  <div class="filters" id="filters"></div><div class="cards" id="cards"></div>
+  <button class="random" onclick="randomPhrase()" id="randomBtn"></button>
+  <div class="footer" id="footer"></div>
 </div>
-<div id="shopPanel">
-<div id="shopInner">
-<div class="panelHeader"><span id="panelTitle">🛒 상점</span><button class="closeBtn" onclick="closePanel()">✕</button></div>
-<div id="subTabs" class="subTabs">
-<button onclick="showTab('fish')" id="subBtnFish">🐟 물고기</button>
-<button onclick="showTab('upgrade')" id="subBtnUpgrade">⬆️ 업그레이드</button>
-<button onclick="showTab('special')" id="subBtnSpecial">✨ 특별</button>
-</div>
-<div id="tabFishContent">
-<div class="shopItem"><div class="info"><span class="icon">🐟</span><div>새끼 물고기 (랜덤 종류)<br><small id="fishCostText"></small></div></div><button id="buyFishBtn" onclick="buyRandomFish()">구매</button></div>
-</div>
-<div id="tabUpgradeContent" style="display:none">
-<div class="shopItem"><div class="info"><span class="icon">🍤</span><div>먹이 업그레이드<br><small id="feedCostText"></small></div></div><button onclick="buyFeed()">구매</button></div>
-<div class="shopItem"><div class="info"><span class="icon">🔫</span><div>무기 업그레이드<br><small id="weaponCostText"></small></div></div><button onclick="buyWeapon()">구매</button></div>
-<div class="shopItem"><div class="info"><span class="icon">📈</span><div>코인 부스트<br><small id="coinBoostCostText"></small></div></div><button onclick="buyCoinBoost()">구매</button></div>
-<div class="shopItem"><div class="info"><span class="icon">💎</span><div>다이아 부스트<br><small id="diaBoostCostText"></small></div></div><button onclick="buyDiaBoost()">구매</button></div>
-</div>
-<div id="tabSpecialContent" style="display:none">
-<div class="shopItem" id="feedUnlockItem"><div class="info"><span class="icon">🍽</span><div>자동 먹이 (오토)<br><small id="feedUnlockCostText"></small></div></div><button onclick="buyFeedUnlock()">해금</button></div>
-<div class="shopItem" id="autoAttackItem"><div class="info"><span class="icon">🤖</span><div>자동 공격<br><small id="autoAttackCostText"></small></div></div><button onclick="buyAutoAttack()">해금</button></div>
-</div>
-<div id="tabDexContent" style="display:none">
-<div class="dexBonus" id="dexBonusText"></div>
-<div id="dexGrid" class="grid"></div>
-</div>
-<div id="tabSettingsContent" style="display:none">
-<div class="shopItem"><div class="info"><span class="icon">🎵</span><div>배경음악 &amp; 효과음<br><small>브라우저 정책상 화면을 한 번 터치해야 재생돼요</small></div></div><button id="soundToggleBtn" onclick="toggleSound()">켜짐</button></div>
-</div>
-</div>
-</div>
-<div id="main">
-<div id="tank"></div>
-<div id="bossBar"></div>
-</div>
-</div>
-<div id="toast"></div>
+<div class="modal" id="modal" onclick="outsideClose(event)"><div class="sheet">
+  <button class="close" onclick="closeModal()">×</button>
+  <div class="modal-title" id="mKo"></div><div class="literal" id="mAlt"></div>
+  <div class="block"><div class="label" id="labelMeaning"></div><div class="value" id="mMeaning"></div></div>
+  <div class="block"><div class="label" id="labelExample"></div><div class="value" id="mExample"></div></div>
+  <div class="block"><div class="label" id="labelNote"></div><div class="value" id="mNote"></div></div>
+</div></div>
 <script>
-var SPECIES=[
-{name:'금붕어',emoji:'🐟',mult:1},
-{name:'열대어',emoji:'🐠',mult:1.25},
-{name:'복어',emoji:'🐡',mult:1.5},
-{name:'새우',emoji:'🦐',mult:1.7},
-{name:'게',emoji:'🦀',mult:1.9},
-{name:'문어',emoji:'🐙',mult:2.2},
-{name:'오징어',emoji:'🦑',mult:2.5},
-{name:'랍스터',emoji:'🦞',mult:2.9},
-{name:'거북이',emoji:'🐢',mult:3.3},
-{name:'돌고래',emoji:'🐬',mult:3.8},
-{name:'상어',emoji:'🦈',mult:4.4},
-{name:'고래',emoji:'🐳',mult:5.2}
+const UI={
+ en:{title:'Korea Survival Kit',subtitle:'Your tiny guide to surviving everyday life in Korea.',search:'Search Korean words or phrases...',searchBtn:'Search',list:'Useful Korean',random:'🎲 Random Korean Phrase',footer:'Korea Survival Kit 🇰🇷<br>Made for curious people traveling and living in Korea.',all:'All',empty:'No matches found.',meaning:'What it means',example:'Example',note:'Usage note',close:'Close',count:n=>`${n} items`,modules:{Phrases:['Korean Phrases','Useful everyday Korean'],Slang:['Korean Slang','Natural casual expressions'],Food:['What to Eat','Order Korean food with confidence'],Money:['Money & N-bbang','Prices, payments & splitting bills'],Culture:['Culture & Social','Everyday Korean etiquette & fun'],Subway:['Subway Help','Stations, transfers & getting around']},cats:{Phrases:'Phrases',Slang:'Slang',Food:'Food',Money:'Money',Culture:'Culture',Subway:'Subway'}},
+ zh:{title:'韩国生存指南',subtitle:'一份帮你应对韩国日常生活的小指南。',search:'搜索韩语单词或表达...',searchBtn:'搜索',list:'实用韩语',random:'🎲 随机韩语表达',footer:'Korea Survival Kit 🇰🇷<br>为在韩国旅行和生活的好奇者准备。',all:'全部',empty:'没有找到相关内容。',meaning:'意思',example:'例句',note:'使用提示',close:'关闭',count:n=>`${n} 条`,modules:{Phrases:['韩语日常表达','日常生活中实用的韩语'],Slang:['韩国流行语','更自然的朋友式表达'],Food:['韩国美食','点餐不再慌张'],Money:['付款与AA','价格、付款和分摊'],Culture:['韩国文化','日常礼仪与社交'],Subway:['地铁指南','车站、换乘与出行']},cats:{Phrases:'日常表达',Slang:'流行语',Food:'美食',Money:'金钱',Culture:'文化',Subway:'地铁'}}
+};
+const D=[
+['안녕하세요','Hello','你好','Phrases','A polite, universal greeting.','A safe default when meeting someone.','안녕하세요! 처음 뵙겠습니다.','Hello! Nice to meet you.','初次见面，你好！'],
+['감사합니다','Thank you','谢谢','Phrases','A polite way to say thank you.','Use it with staff, strangers, older people, or in formal situations.','도와주셔서 감사합니다.','Thank you for helping me.','谢谢你帮助我。'],
+['고마워','Thanks','谢谢你','Phrases','A casual thank-you.','Use with friends or people you are close to.','와줘서 고마워!','Thanks for coming!','谢谢你来！'],
+['고마워요','Thank you','谢谢你','Phrases','A softer polite thank-you.','Friendly and polite without sounding very formal.','정말 고마워요.','Thank you so much.','真的谢谢你。'],
+['죄송합니다','I’m sorry','对不起','Phrases','A formal/polite apology.','A useful default when apologizing to strangers.','늦어서 죄송합니다.','I’m sorry I’m late.','对不起，我迟到了。'],
+['미안해요','Sorry','对不起','Phrases','A friendly polite apology.','Less formal than 죄송합니다.','기다리게 해서 미안해요.','Sorry for making you wait.','不好意思让你久等了。'],
+['미안해','Sorry','对不起','Phrases','A casual apology.','Use with friends or close people.','늦어서 미안해.','Sorry I’m late.','对不起，我迟到了。'],
+['네','Yes / Okay','是 / 好的','Phrases','Yes; also “okay” or “I understand.”','Context matters: it can simply acknowledge what someone said.','네, 알겠습니다.','Yes, I understand.','好的，我明白了。'],
+['아니요','No','不 / 不是','Phrases','A polite no.','Useful when declining or correcting something.','아니요, 괜찮아요.','No, it’s okay.','不用了，没关系。'],
+['괜찮아요','It’s okay / I’m fine','没关系 / 我很好','Phrases','Can mean “it’s okay,” “no thanks,” or “I’m fine.”','One of the most useful flexible Korean expressions.','괜찮아요, 감사합니다.','No thanks, I’m okay.','不用了，谢谢。'],
+['알겠어요','I understand','我明白了','Phrases','I understand / got it.','Friendly-polite acknowledgement.','네, 알겠어요.','Okay, I understand.','好的，我明白了。'],
+['알겠습니다','Understood','明白了','Phrases','A more formal “understood.”','Common in service and work situations.','네, 알겠습니다.','Understood.','好的，明白了。'],
+['잘 모르겠어요','I’m not sure','我不太清楚','Phrases','I’m not sure / I don’t really know.','A natural way to express uncertainty.','잘 모르겠어요. 다시 설명해 주세요.','I’m not sure. Please explain again.','我不太清楚，请再解释一下。'],
+['잠시만요','Just a moment','请稍等','Phrases','Just a moment / excuse me for a second.','Useful when asking someone to wait.','잠시만요. 확인해 볼게요.','Just a moment. I’ll check.','请稍等，我确认一下。'],
+['잠깐만요','Wait a second','等一下','Phrases','Wait a moment.','More casual than 잠시만요.','잠깐만요!','Wait a second!','等一下！'],
+['실례합니다','Excuse me','打扰一下 / 借过','Phrases','Excuse me.','Useful for getting attention or politely interrupting.','실례합니다. 여기 자리 있나요?','Excuse me. Is this seat taken?','打扰一下，这里有人吗？'],
+['여기요','Excuse me / Over here','您好 / 这边','Phrases','A way to call staff over.','Common in restaurants and cafés.','여기요! 물 좀 주세요.','Excuse me! Some water, please.','您好！请给我一些水。'],
+['저기요','Excuse me','不好意思 / 请问','Phrases','A casual way to get someone’s attention.','Often used before asking a stranger something.','저기요, 지하철역이 어디예요?','Excuse me, where is the subway station?','不好意思，请问地铁站在哪里？'],
+['어디예요?','Where is it?','在哪里？','Phrases','Where is it?','Add a place before 예요 for simple directions.','화장실이 어디예요?','Where is the restroom?','洗手间在哪里？'],
+['얼마예요?','How much is it?','多少钱？','Phrases','How much is it?','Essential for shopping, markets, taxis, and food.','이거 얼마예요?','How much is this?','这个多少钱？'],
+['이거 주세요','I’ll take this, please','请给我这个','Phrases','Please give me this / I’ll have this.','One of the easiest ways to order or buy something.','이거 하나 주세요.','One of these, please.','请给我一个这个。'],
+['하나 주세요','One, please','请给我一个','Phrases','One, please.','Change 하나 to 두 개, 세 개, etc. for quantity.','김밥 하나 주세요.','One gimbap, please.','请给我一份紫菜包饭。'],
+['두 개 주세요','Two, please','请给我两个','Phrases','Two, please.','Useful when ordering multiples.','이거 두 개 주세요.','Two of these, please.','请给我两个这个。'],
+['포장해 주세요','Takeout, please','请打包','Phrases','Please pack it to go.','Useful at restaurants and cafés.','이거 포장해 주세요.','Please make this to go.','请把这个打包。'],
+['여기서 먹을게요','I’ll eat here','我在这里吃','Phrases','I’ll eat here.','Useful when choosing dine-in instead of takeout.','여기서 먹을게요.','I’ll eat here.','我在这里吃。'],
+['물 주세요','Water, please','请给我水','Phrases','Water, please.','Simple restaurant request.','물 한 잔 주세요.','A glass of water, please.','请给我一杯水。'],
+['화장실 어디예요?','Where is the restroom?','洗手间在哪里？','Phrases','Where is the restroom?','A must-know travel phrase.','화장실이 어디예요?','Where is the restroom?','洗手间在哪里？'],
+['영어 할 줄 아세요?','Do you speak English?','你会说英语吗？','Phrases','Can you speak English?','A polite way to ask before switching languages.','혹시 영어 할 줄 아세요?','Do you happen to speak English?','请问你会说英语吗？'],
+['한국어 잘 못해요','I don’t speak Korean well','我的韩语不太好','Phrases','My Korean isn’t very good.','Useful for setting expectations politely.','한국어 잘 못해요. 천천히 말해 주세요.','My Korean isn’t good. Please speak slowly.','我的韩语不太好，请说慢一点。'],
+['천천히 말해 주세요','Please speak slowly','请说慢一点','Phrases','Please speak slowly.','Very useful when you are still learning Korean.','조금만 천천히 말해 주세요.','Please speak a little more slowly.','请稍微说慢一点。'],
+['다시 말해 주세요','Please say that again','请再说一遍','Phrases','Please say it again.','Use when you missed what someone said.','죄송한데 다시 말해 주세요.','Sorry, could you say that again?','不好意思，请再说一遍。'],
+['무슨 뜻이에요?','What does it mean?','是什么意思？','Phrases','What does it mean?','Great for learning new Korean words.','이 단어가 무슨 뜻이에요?','What does this word mean?','这个词是什么意思？'],
+['한국어로 뭐예요?','What is it in Korean?','韩语怎么说？','Phrases','How do you say it in Korean?','Use when learning the Korean word for something.','이거 한국어로 뭐예요?','What is this called in Korean?','这个用韩语怎么说？'],
+['맞아요','That’s right','对，没错','Phrases','That’s right / correct.','Very common in conversation.','네, 맞아요.','Yes, that’s right.','对，没错。'],
+['진짜요?','Really?','真的吗？','Phrases','Really?','Shows surprise or interest.','진짜요? 대박!','Really? That’s amazing!','真的吗？太厉害了！'],
+['대박','Awesome / No way','太厉害了 / 不敢相信','Slang','An exclamation for something amazing, shocking, or impressive.','Very common casual slang.','와, 이거 진짜 대박이다.','Wow, this is amazing.','哇，这真的太厉害了。'],
+['헐','OMG / No way','天啊 / 不会吧','Slang','An exclamation of surprise or disbelief.','Very casual; common in texts and conversation.','헐, 진짜?','OMG, really?','天啊，真的吗？'],
+['완전','Totally / Super','完全 / 超级','Slang','Totally, really, super.','Casual intensifier used before adjectives.','완전 맛있어!','It’s seriously delicious!','超级好吃！'],
+['짱','The best / Awesome','最棒 / 超赞','Slang','The best / awesome.','Old-school but still understandable casual slang.','이 카페 짱이야.','This café is awesome.','这家咖啡店超棒。'],
+['꿀맛','So delicious','超级好吃','Slang','Literally “honey taste”; extremely delicious.','Playful casual expression.','치킨이 진짜 꿀맛이야.','The chicken is insanely good.','炸鸡真的超级好吃。'],
+['맛집','Great food spot','美食店','Slang','A restaurant known for good food.','Literally a “tasty place”; very common online and in conversation.','여기 근처 맛집 있어요?','Are there any good restaurants around here?','这附近有好吃的店吗？'],
+['존맛','Freaking delicious','巨好吃','Slang','Very casual internet slang meaning extremely delicious.','Use only with friends; avoid formal situations.','이거 존맛이다.','This is freaking delicious.','这个巨好吃。'],
+['노맛','Not tasty','不好吃','Slang','Casual slang for something that tastes bad.','Very informal and playful.','생각보다 노맛이네.','It’s not as good as I expected.','比想象中不好吃。'],
+['ㅋㅋ','LOL / haha','哈哈','Slang','Written laughter, like “lol” or “haha.”','The number of ㅋ can vary with tone.','ㅋㅋ 진짜 웃겨.','LOL, that’s so funny.','哈哈，真的好搞笑。'],
+['ㅎㅎ','Hehe / haha','嘿嘿 / 哈哈','Slang','A softer, friendlier written laugh.','Often feels gentler than ㅋㅋ.','ㅎㅎ 알겠어.','Hehe, got it.','嘿嘿，知道了。'],
+['ㅇㅇ','Yeah / yep','嗯 / 对','Slang','Very casual text abbreviation for yes.','Use only in casual chats.','ㅇㅇ 맞아.','Yep, exactly.','嗯，对。'],
+['ㄱㄱ','Let’s go / go go','走起 / 冲','Slang','Text abbreviation meaning “go go” or “let’s do it.”','Very casual online/chat language.','ㄱㄱ! 지금 가자.','Let’s go! Let’s go now.','走起！现在出发。'],
+['인싸','Social butterfly / trend-savvy person','社牛 / 很会社交的人','Slang','A person who is socially connected and in the know.','Casual modern slang.','그 사람 완전 인싸야.','That person is super social.','那个人特别会社交。'],
+['아싸','Outsider / loner','独来独往的人','Slang','A casual opposite of 인싸.','Often humorous rather than a serious label.','나는 집에 있는 아싸야.','I’m a homebody and kind of a loner.','我是喜欢待在家的独行派。'],
+['눈치','Social awareness / reading the room','察言观色 / 看气氛','Culture','The ability to sense the mood and social situation.','A major Korean cultural concept.','눈치 좀 봐.','Read the room a little.','注意一下气氛。'],
+['눈치 없다','Clueless / bad at reading the room','不会看气氛','Culture','Not good at sensing social cues.','Can sound critical, so use carefully.','너 진짜 눈치 없다.','You really can’t read the room.','你真的不会看气氛。'],
+['눈치 보다','Read the room / watch others’ reactions','看别人脸色 / 察言观色','Culture','To watch people’s reactions before acting or speaking.','Common everyday expression.','사람들 눈치 보느라 말을 못 했어.','I couldn’t speak because I was worried about everyone’s reaction.','因为顾虑大家的反应，我没敢说。'],
+['정','Jeong / emotional bond','情分 / 人情','Culture','A deep sense of affection, attachment, and shared bond.','A cultural concept that can build over time.','한국 사람들은 정이 많다고 해요.','People often say Koreans value deep emotional bonds.','人们常说韩国人很重感情。'],
+['화이팅!','You got this!','加油！','Culture','A cheer meaning “you can do it!”','Commonly used before work, exams, sports, or difficult tasks.','오늘도 화이팅!','You’ve got this today!','今天也加油！'],
+['잘 먹겠습니다','Thank you for the meal (before eating)','我开动了','Culture','A polite phrase said before eating.','It expresses appreciation for the food.','잘 먹겠습니다!','Thank you for the meal!','我开动了！'],
+['잘 먹었습니다','Thank you for the meal (after eating)','谢谢款待','Culture','A phrase said after eating.','Shows appreciation for the meal.','잘 먹었습니다!','Thank you for the meal!','谢谢款待！'],
+['건배','Cheers','干杯','Culture','Cheers / toast.','Often used before taking a drink together.','건배!','Cheers!','干杯！'],
+['짠','Cheers!','干杯！','Culture','A casual toast expression, often while clinking glasses.','Very common in casual drinking situations.','짠!','Cheers!','干杯！'],
+['한잔하다','Have a drink','喝一杯','Culture','To have a drink, often socially.','Usually means having alcoholic drinks, depending on context.','오늘 저녁에 한잔할래?','Want to grab a drink tonight?','今晚要不要喝一杯？'],
+['소주','Soju','烧酒','Food','Korean distilled spirit commonly served socially.','Often ordered by the bottle at Korean restaurants.','소주 한 병 주세요.','One bottle of soju, please.','请给我一瓶烧酒。'],
+['맥주','Beer','啤酒','Food','Beer.','Useful when ordering drinks.','맥주 두 잔 주세요.','Two glasses of beer, please.','请给我两杯啤酒。'],
+['물','Water','水','Food','Water.','Often served free at casual restaurants.','물 좀 주세요.','Some water, please.','请给我一些水。'],
+['김치','Kimchi','泡菜','Food','Fermented Korean side dish, usually spicy and savory.','Often served as a banchan side dish.','김치 더 주세요.','More kimchi, please.','请再给一些泡菜。'],
+['김밥','Gimbap','紫菜包饭','Food','Rice and fillings rolled in seaweed.','A convenient Korean meal or snack.','김밥 한 줄 주세요.','One roll of gimbap, please.','请给我一卷紫菜包饭。'],
+['비빔밥','Bibimbap','拌饭','Food','Rice mixed with vegetables, sauce, and often meat or egg.','Mix everything together before eating.','비빔밥 하나 주세요.','One bibimbap, please.','请来一份拌饭。'],
+['불고기','Bulgogi','烤肉 / 韩式烤牛肉','Food','Marinated Korean-style beef, often grilled or stir-fried.','A familiar Korean dish for first-time visitors.','불고기 2인분 주세요.','Two servings of bulgogi, please.','请来两人份烤牛肉。'],
+['삼겹살','Pork belly','五花肉','Food','Grilled pork belly.','Often cooked at the table and wrapped with lettuce.','삼겹살 2인분 주세요.','Two servings of pork belly, please.','请来两人份五花肉。'],
+['떡볶이','Tteokbokki','辣炒年糕','Food','Chewy rice cakes in a spicy-sweet sauce.','A classic Korean street-food dish.','떡볶이 하나 주세요.','One tteokbokki, please.','请来一份辣炒年糕。'],
+['치킨','Fried chicken','炸鸡','Food','Korean fried chicken.','Often ordered with beer.','치킨 한 마리 주세요.','One whole chicken, please.','请来一只炸鸡。'],
+['라면','Ramen','拉面','Food','Instant-style Korean noodles.','Often available in convenience stores and restaurants.','라면 하나 주세요.','One ramen, please.','请来一份拉面。'],
+['냉면','Cold noodles','冷面','Food','Chilled Korean noodles, often served in a cold broth or spicy sauce.','Especially popular in warmer weather.','물냉면 하나 주세요.','One cold noodle soup, please.','请来一份汤冷面。'],
+['만두','Dumplings','饺子','Food','Korean-style dumplings.','Can be steamed, fried, or served in soup.','만두 한 접시 주세요.','One plate of dumplings, please.','请来一盘饺子。'],
+['계산할게요','I’d like to pay','我要结账','Money','I’d like to pay.','Natural phrase when you are ready for the bill.','계산할게요.','I’d like to pay.','我要结账。'],
+['카드 돼요?','Can I pay by card?','可以刷卡吗？','Money','Can I pay by card?','Useful at small shops or markets.','카드 돼요?','Can I pay by card?','可以刷卡吗？'],
+['현금만 돼요?','Is it cash only?','只能付现金吗？','Money','Is cash the only payment method?','Useful before ordering at smaller places.','여기는 현금만 돼요?','Is it cash only here?','这里只能付现金吗？'],
+['영수증 주세요','Receipt, please','请给我收据','Money','Receipt, please.','Useful when you need proof of purchase.','영수증 주세요.','Receipt, please.','请给我收据。'],
+['봉투 주세요','A bag, please','请给我一个袋子','Money','A shopping bag, please.','Useful at convenience stores and shops.','봉투 하나 주세요.','One bag, please.','请给我一个袋子。'],
+['따로 계산할게요','We’ll pay separately','我们分开付款','Money','We’ll pay separately.','Useful when splitting a restaurant bill.','저희 따로 계산할게요.','We’ll pay separately.','我们分开付款。'],
+['같이 계산할게요','We’ll pay together','我们一起付款','Money','We’ll pay together.','Useful when one person is paying for everyone.','같이 계산할게요.','We’ll pay together.','我们一起付款。'],
+['더치페이','Split the bill','AA制 / 分摊账单','Money','Splitting a bill between people.','Understandable in Korea, though 따로 계산하다 is often more natural in context.','오늘 더치페이 할까?','Should we split the bill today?','今天要不要AA？'],
+['N빵','Split evenly','平均分摊','Money','Splitting a cost evenly among the group.','N means the number of people.','이번엔 N빵 하자.','Let’s split it evenly.','这次大家平均分摊吧。'],
+['얼마씩 내요?','How much does each person pay?','每个人付多少？','Money','How much should each person pay?','Useful when splitting a bill.','우리 얼마씩 내요?','How much does each person pay?','我们每个人付多少？'],
+['잔돈','Change','零钱','Money','Change from a cash payment.','Useful at markets and small shops.','잔돈 있어요?','Do you have change?','有零钱吗？'],
+['천 원','1,000 won','一千韩元','Money','One thousand Korean won.','Useful for understanding everyday prices.','천 원이에요.','It’s 1,000 won.','一千韩元。'],
+['만원','10,000 won','一万韩元','Money','10,000 Korean won.','Very common price unit in daily life.','만원이에요.','It’s 10,000 won.','一万韩元。'],
+['몇 명이에요?','How many people?','几个人？','Culture','How many people are in your group?','Common question at restaurants and venues.','몇 명이에요?','How many people?','几个人？'],
+['두 명이에요','Two people','两个人','Culture','There are two of us.','Change the number as needed.','두 명이에요.','There are two of us.','两个人。'],
+['예약했어요','I have a reservation','我预约了','Culture','I have a reservation.','Useful at restaurants, salons, hotels, etc.','7시에 예약했어요.','I have a reservation at 7.','我预约了7点。'],
+['예약하고 싶어요','I’d like to make a reservation','我想预约','Culture','I’d like to make a reservation.','Useful for restaurants and appointments.','오늘 저녁 예약하고 싶어요.','I’d like to make a reservation for tonight.','我想预约今晚的座位。'],
+['몇 시예요?','What time is it?','现在几点？','Culture','What time is it?','Simple time question.','지금 몇 시예요?','What time is it now?','现在几点？'],
+['오늘','Today','今天','Culture','Today.','Useful basic time word.','오늘 뭐 해요?','What are you doing today?','今天做什么？'],
+['내일','Tomorrow','明天','Culture','Tomorrow.','Useful for plans and bookings.','내일 만나요.','See you tomorrow.','明天见。'],
+['어제','Yesterday','昨天','Culture','Yesterday.','Useful basic time word.','어제 뭐 했어요?','What did you do yesterday?','昨天做了什么？'],
+['지금','Now','现在','Culture','Now.','Useful in directions and plans.','지금 가요.','I’m going now.','我现在去。'],
+['왼쪽','Left','左边','Subway','Left.','Useful for signs and directions.','왼쪽으로 가세요.','Go to the left.','往左走。'],
+['오른쪽','Right','右边','Subway','Right.','Useful for signs and directions.','오른쪽으로 가세요.','Go to the right.','往右走。'],
+['직진','Straight ahead','直走','Subway','Straight ahead.','Common direction word on signs.','여기서 직진하세요.','Go straight from here.','从这里直走。'],
+['출구','Exit','出口','Subway','Exit.','Essential subway vocabulary.','몇 번 출구예요?','Which exit number?','是几号出口？'],
+['입구','Entrance','入口','Subway','Entrance.','Useful for stations, buildings, and venues.','입구가 어디예요?','Where is the entrance?','入口在哪里？'],
+['환승','Transfer','换乘','Subway','Transfer.','Switching from one subway line to another.','여기서 환승해요?','Do I transfer here?','要在这里换乘吗？'],
+['몇 호선','Which line?','几号线？','Subway','Which subway line?','Used when asking about line numbers.','몇 호선이에요?','Which line is it?','是几号线？'],
+['역','Station','车站','Subway','Station.','Usually used after a station name.','서울역에 가요.','I’m going to Seoul Station.','我要去首尔站。'],
+['지하철','Subway','地铁','Subway','Subway / metro.','Core transportation word.','지하철 타고 가요.','I’m going by subway.','我坐地铁去。'],
+['버스','Bus','公交车','Subway','Bus.','Basic public-transport word.','버스 어디서 타요?','Where do I catch the bus?','在哪里坐公交车？'],
+['택시','Taxi','出租车','Subway','Taxi.','Basic transportation word.','택시 불러 주세요.','Please call a taxi.','请帮我叫一辆出租车。'],
+['내려요','I’m getting off','我要下车','Subway','I’m getting off.','Useful on buses and trains.','다음 역에서 내려요.','I’m getting off at the next station.','我在下一站下车。'],
+['타요','I’m getting on / ride','上车 / 乘坐','Subway','To get on or ride a vehicle.','Context tells you the exact meaning.','지하철 타요.','I’m taking the subway.','我坐地铁。'],
+['길을 잃었어요','I’m lost','我迷路了','Subway','I’m lost.','Useful when you need directions.','길을 잃었어요. 도와주세요.','I’m lost. Please help me.','我迷路了，请帮帮我。'],
+['여기로 가 주세요','Please take me here','请带我去这里','Subway','Please take me here.','Useful for showing a taxi driver a destination.','여기로 가 주세요.','Please take me here.','请带我去这里。'],
+['천천히 가 주세요','Please go slowly','请慢一点','Subway','Please go slowly.','Useful in a taxi when you want a slower pace.','조금 천천히 가 주세요.','Please go a little slower.','请稍微慢一点。'],
+['여기 맞아요?','Is this the right place?','是这里吗？','Subway','Is this the right place?','Useful when checking directions or a destination.','여기 맞아요?','Is this the right place?','是这里吗？'],
+['사진 찍어도 돼요?','Can I take a photo?','可以拍照吗？','Culture','Is it okay if I take a photo?','Polite permission request.','여기 사진 찍어도 돼요?','Can I take a photo here?','这里可以拍照吗？'],
+['들어가도 돼요?','Can I go in?','可以进去吗？','Culture','Can I go in?','Useful for shops, events, offices, and private areas.','여기 들어가도 돼요?','Can I go in here?','这里可以进去吗？'],
+['먹어도 돼요?','Can I eat it?','可以吃吗？','Culture','Can I eat it?','Simple permission question.','이거 먹어도 돼요?','Can I eat this?','这个可以吃吗？'],
+['괜찮습니다','It’s okay / No, thank you','没关系 / 不用了','Culture','A more formal version of 괜찮아요.','Useful in polite service situations.','괜찮습니다. 감사합니다.','No, thank you.','不用了，谢谢。'],
+['어서 오세요','Welcome','欢迎光临','Culture','Welcome, commonly heard when entering a shop or restaurant.','Usually said by staff, not customers.','어서 오세요!','Welcome!','欢迎光临！'],
+['맛있어요','It’s delicious','很好吃','Food','It’s delicious.','One of the easiest compliments for Korean food.','정말 맛있어요.','It’s really delicious.','真的很好吃。'],
+['매워요','It’s spicy','很辣','Food','It’s spicy.','Useful before ordering or describing food.','이거 많이 매워요?','Is this very spicy?','这个很辣吗？'],
+['안 매워요','It’s not spicy','不辣','Food','It’s not spicy.','Useful when checking spice level.','이거 안 매워요?','Is this not spicy?','这个不辣吗？'],
+['덜 맵게 해 주세요','Less spicy, please','请做得不那么辣','Food','Please make it less spicy.','Useful when ordering spicy dishes.','조금 덜 맵게 해 주세요.','Please make it a little less spicy.','请做得稍微不那么辣。'],
+['맵지 않게 해 주세요','Please make it not spicy','请不要做辣','Food','Please make it non-spicy.','A clear request when you cannot handle spice.','맵지 않게 해 주세요.','Please make it not spicy.','请不要做辣。'],
+['알레르기가 있어요','I have an allergy','我有过敏','Food','I have an allergy.','Important when discussing food restrictions.','땅콩 알레르기가 있어요.','I’m allergic to peanuts.','我对花生过敏。'],
+['땅콩 들어가요?','Does it contain peanuts?','里面有花生吗？','Food','Does it contain peanuts?','Useful for checking ingredients.','이거 땅콩 들어가요?','Does this contain peanuts?','这个里面有花生吗？'],
+['고수 빼 주세요','No cilantro, please','请不要香菜','Food','Please leave out cilantro.','Useful if you dislike cilantro.','고수 빼 주세요.','No cilantro, please.','请不要放香菜。'],
+['채식이에요','I’m vegetarian','我是素食者','Food','I’m vegetarian.','Useful when explaining dietary preference.','저 채식이에요.','I’m vegetarian.','我是素食者。'],
+['추천해 주세요','Please recommend something','请推荐一下','Food','Please recommend something.','Great when you are unsure what to order.','메뉴 추천해 주세요.','Please recommend a menu item.','请推荐一道菜。'],
+['뭐가 제일 맛있어요?','What’s the best thing?','什么最好吃？','Food','What is the most delicious/popular choice?','Natural way to ask staff for a recommendation.','여기서 뭐가 제일 맛있어요?','What’s best here?','这里什么最好吃？'],
+['서비스','On the house / complimentary item','赠送的小菜或服务','Food','A complimentary item or service.','In restaurants, 서비스 can mean something given free.','이거 서비스예요?','Is this complimentary?','这个是赠送的吗？'],
+['반찬','Side dishes','小菜','Food','Small side dishes served with a Korean meal.','Often refillable depending on the restaurant.','반찬 더 주세요.','More side dishes, please.','请再来一些小菜。'],
+['리필','Refill','续杯 / 再来一份','Food','Refill.','Common Konglish loanword used in restaurants and cafés.','반찬 리필 돼요?','Can I get a refill?','小菜可以续吗？'],
+['포장','Takeout / packaging','打包','Food','Takeout or packaging.','Common word on menus and signs.','포장 가능해요?','Is takeout available?','可以打包吗？'],
+['배달','Delivery','外卖','Food','Delivery.','Very common in Korea.','배달돼요?','Do you offer delivery?','可以外卖吗？'],
+['카페','Café','咖啡店','Food','Café.','Korean pronunciation of “café.”','근처에 카페 있어요?','Is there a café nearby?','附近有咖啡店吗？'],
+['편의점','Convenience store','便利店','Culture','Convenience store.','Useful for snacks, drinks, transit top-ups, and daily essentials.','편의점 어디 있어요?','Where is the convenience store?','便利店在哪里？'],
+['다녀오세요','Have a good trip / See you when you get back','慢走 / 回来见','Culture','A phrase said to someone leaving who is expected to return.','Often heard at home, work, or shops.','다녀오세요!','See you when you get back!','慢走，回来见！'],
+['다녀왔어요','I’m back','我回来了','Culture','I’m back.','Often said when returning home or to a place.','다녀왔어요!','I’m back!','我回来了！'],
+['잘 자','Good night','晚安','Culture','Good night, casual.','Use with friends or close people.','잘 자!','Good night!','晚安！'],
+['잘 자요','Good night','晚安','Culture','Good night, polite.','Friendly-polite version.','잘 자요.','Good night.','晚安。'],
+['또 봐요','See you again','下次见','Culture','See you again.','Friendly farewell.','그럼 또 봐요!','Then, see you again!','那下次见！'],
+['나중에 봐요','See you later','回头见','Culture','See you later.','Common casual-polite farewell.','나중에 봐요!','See you later!','回头见！'],
+['파이팅','You can do it','加油','Culture','A cheer of encouragement.','Often written 파이팅 or 화이팅.','시험 잘 봐! 파이팅!','Good luck on the exam! You’ve got this!','考试加油！你可以的！'],
+['대신','Instead / on behalf of','代替 / 替','Money','Instead of / on behalf of.','Useful for splitting responsibilities or asking someone to do something for you.','내 대신 해 주세요.','Please do it for me.','请替我做。'],
+['제가 낼게요','I’ll pay','我来付','Money','I’ll pay.','Common when offering to cover a bill.','이번에는 제가 낼게요.','I’ll pay this time.','这次我来付。'],
+['이번엔 네가 사','You buy this time','这次你请客','Money','You pay this time.','Casual expression among friends.','이번엔 네가 사!','You’re buying this time!','这次你请客！'],
+['나눠서 계산해 주세요','Please split the bill','请分开结账','Money','Please split the payment.','Useful at a restaurant counter.','두 팀으로 나눠서 계산해 주세요.','Please split the bill into two payments.','请分成两笔结账。'],
+['계산대','Checkout / cashier','收银台','Money','Checkout counter.','Useful in shops and convenience stores.','계산대가 어디예요?','Where is the checkout?','收银台在哪里？'],
+['할인돼요?','Is there a discount?','有折扣吗？','Money','Is there a discount?','Useful while shopping.','학생 할인돼요?','Is there a student discount?','有学生折扣吗？'],
+['비싸요','It’s expensive','很贵','Money','It’s expensive.','Simple price reaction.','조금 비싸요.','It’s a little expensive.','有点贵。'],
+['싸요','It’s cheap','很便宜','Money','It’s cheap / inexpensive.','Simple price reaction.','생각보다 싸요.','It’s cheaper than I expected.','比想象中便宜。'],
+['충전해 주세요','Please top it up','请充值','Subway','Please top up / recharge it.','Useful for transportation cards and prepaid items.','교통카드 충전해 주세요.','Please top up my transit card.','请给交通卡充值。'],
+['교통카드','Transit card','交通卡','Subway','Public transportation card.','Used for buses and subways.','교통카드 있어요?','Do you have a transit card?','有交通卡吗？'],
+['환승역','Transfer station','换乘站','Subway','Transfer station.','Useful when planning subway routes.','다음 환승역이 어디예요?','What’s the next transfer station?','下一站换乘站是哪里？'],
+['막차','Last train / last bus','末班车','Subway','The last train or bus of the day.','Important when staying out late.','막차 몇 시예요?','What time is the last train?','末班车几点？'],
+['첫차','First train / first bus','首班车','Subway','The first train or bus of the day.','Useful for early-morning travel.','첫차 몇 시예요?','What time is the first train?','首班车几点？'],
+['몇 분 걸려요?','How many minutes does it take?','要几分钟？','Subway','How many minutes does it take?','Useful for routes, taxis, and walking.','여기서 몇 분 걸려요?','How many minutes from here?','从这里要几分钟？'],
+['걸어서','On foot','走路','Subway','On foot / walking.','Useful for asking how to get somewhere.','걸어서 갈 수 있어요?','Can I walk there?','可以走路去吗？'],
+['가까워요','It’s close','很近','Subway','It’s close / nearby.','Useful for checking distance.','여기서 가까워요?','Is it close from here?','离这里近吗？'],
+['멀어요','It’s far','很远','Subway','It’s far.','Useful for checking distance.','많이 멀어요?','Is it very far?','很远吗？']
 ];
-var tankEl=document.getElementById('tank');
-var coinDisplay=document.getElementById('coinDisplay');
-var diaDisplay=document.getElementById('diaDisplay');
-var fishDisplay=document.getElementById('fishDisplay');
-var toastEl=document.getElementById('toast');
-var fishCostTextEl=document.getElementById('fishCostText');
-var buyFishBtnEl=document.getElementById('buyFishBtn');
-var feedCostTextEl=document.getElementById('feedCostText');
-var weaponCostTextEl=document.getElementById('weaponCostText');
-var coinBoostCostTextEl=document.getElementById('coinBoostCostText');
-var diaBoostCostTextEl=document.getElementById('diaBoostCostText');
-var feedUnlockCostTextEl=document.getElementById('feedUnlockCostText');
-var autoAttackCostTextEl=document.getElementById('autoAttackCostText');
-var dexBonusTextEl=document.getElementById('dexBonusText');
-var panelTitleEl=document.getElementById('panelTitle');
-var dexGridEl=document.getElementById('dexGrid');
-var feedBtnEl=document.getElementById('feedBtn');
-var soundToggleBtnEl=document.getElementById('soundToggleBtn');
-var feedUnlockItemEl=document.getElementById('feedUnlockItem');
-var autoAttackItemEl=document.getElementById('autoAttackItem');
-var bossBarEl=document.getElementById('bossBar');
-var subBtnFish=document.getElementById('subBtnFish');
-var subBtnUpgrade=document.getElementById('subBtnUpgrade');
-var subBtnSpecial=document.getElementById('subBtnSpecial');
-var subTabsEl=document.getElementById('subTabs');
-var shopPanelEl=document.getElementById('shopPanel');
-var coins=50;
-var diamonds=5;
-var feedLevel=1;
-var weaponLevel=2;
-var coinBoostLevel=0;
-var diaBoostLevel=0;
-var feedAllUnlocked=false;
-var autoAttackUnlocked=false;
-var autoAttackCost=15;
-var soundOn=true;
-var audioCtx=null;
-var bgMusicHandle=null;
-var bgIndex=0;
-var bgStarted=false;
-var autoFeedCounter=0;
-var autoFeedInterval=9;
-var fishSeq=0;
-var fishList=[];
-var maxFish=24;
-var invaders=[];
-var invaderTimer=10;
-var maxInvaders=3;
-var boss=null;
-var bossCountdown=180;
-var feedUnlockCost=10;
-var saveKey='fishTankSaveV9';
-var tankWidth=0;
-var tankHeight=0;
-var toastTimer=null;
-var maxStage=9;
-var stageNeed=[2,2,3,3,3,4,4,4,5,0];
-var fallingFoods=[];
-var fallHandle=null;
-var speciesUnlocked=[];
-var speciesBestStage=[];
-var dexEntries=[];
-var unlockedCount=0;
-var activeTab='fish';
-
-for(var si=0;si<SPECIES.length;si++){speciesUnlocked.push(false);speciesBestStage.push(0)}
-
-function updateTankSize(){
-tankWidth=tankEl.clientWidth;
-tankHeight=tankEl.clientHeight;
-}
-
-function ensureAudio(){
-if(!audioCtx){
-try{audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
-}
-return audioCtx;
-}
-
-function startBgIfNeeded(){
-if(!soundOn||bgStarted)return;
-var ctx=ensureAudio();
-if(!ctx)return;
-if(ctx.state==='suspended')ctx.resume();
-bgStarted=true;
-if(!bgMusicHandle)bgMusicHandle=setInterval(bgLoop,900);
-}
-
-document.addEventListener('pointerdown',startBgIfNeeded,{once:true});
-
-function playTone(freq,duration,type,volume){
-if(!soundOn)return;
-var ctx=ensureAudio();
-if(!ctx)return;
-var osc=ctx.createOscillator();
-var gain=ctx.createGain();
-osc.type=type||'sine';
-osc.frequency.value=freq;
-gain.gain.value=volume||0.12;
-osc.connect(gain);
-gain.connect(ctx.destination);
-osc.start();
-gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+duration);
-osc.stop(ctx.currentTime+duration);
-}
-
-function playCoin(){playTone(880,0.12,'triangle',0.1);setTimeout(function(){playTone(1180,0.1,'triangle',0.08)},60)}
-function playFeed(){playTone(320,0.07,'sine',0.06)}
-function playLevelUp(){playTone(523,0.12,'square',0.08);setTimeout(function(){playTone(659,0.12,'square',0.08)},110);setTimeout(function(){playTone(784,0.18,'square',0.09)},220)}
-function playHit(){playTone(140,0.07,'square',0.08)}
-function playKill(){playTone(220,0.1,'triangle',0.09);setTimeout(function(){playTone(330,0.14,'triangle',0.09)},80)}
-function playBossDefeat(){playTone(392,0.15,'square',0.1);setTimeout(function(){playTone(523,0.15,'square',0.1)},130);setTimeout(function(){playTone(659,0.2,'square',0.11)},260);setTimeout(function(){playTone(784,0.3,'square',0.12)},390)}
-function playOuch(){playTone(100,0.15,'sawtooth',0.08)}
-
-function bgLoop(){
-var notes=[261.6,329.6,392.0,329.6,293.7,349.2];
-var f=notes[bgIndex%notes.length];
-playTone(f,0.7,'sine',0.035);
-bgIndex++;
-}
-
-function toggleSound(){
-soundOn=!soundOn;
-if(soundOn){
-soundToggleBtnEl.textContent='켜짐';
-startBgIfNeeded();
-if(audioCtx && audioCtx.state==='suspended')audioCtx.resume();
-if(!bgMusicHandle)bgMusicHandle=setInterval(bgLoop,900);
-}else{
-soundToggleBtnEl.textContent='꺼짐';
-if(bgMusicHandle){clearInterval(bgMusicHandle);bgMusicHandle=null}
-bgStarted=false;
-}
-}
-
-function toast(msg){
-toastEl.textContent=msg;
-toastEl.classList.add('show');
-if(toastTimer)clearTimeout(toastTimer);
-toastTimer=setTimeout(function(){toastEl.classList.remove('show')},1200);
-}
-
-function fmtTime(s){
-if(s<0)s=0;
-var m=Math.floor(s/60);
-var sec=Math.floor(s%60);
-return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
-}
-
-function showFloatText(x,y,text,color){
-var el=document.createElement('div');
-el.className='floatText';
-el.textContent=text;
-el.style.left=x+'px';
-el.style.top=y+'px';
-el.style.color=color;
-el.style.fontSize=(text.indexOf('Lv')>=0?14:18)+'px';
-tankEl.appendChild(el);
-setTimeout(function(){el.remove()},900);
-}
-
-function dexBonus(){return 1+unlockedCount*0.05}
-
-function fishCost(){return 8+fishList.length*5}
-function feedCost(){return 20+feedLevel*15}
-function weaponCost(){return 2+weaponLevel*1}
-function coinBoostCost(){return 25+coinBoostLevel*30}
-function diaBoostCost(){return 3+diaBoostLevel*2}
-function sizeForStage(stage){return 22+stage*4}
-
-function farFromFish(x,y,minDist){
-for(var i=0;i<fishList.length;i++){
-if(Math.hypot(fishList[i].x-x,fishList[i].y-y)<minDist)return false;
-}
-return true;
-}
-
-function makeDecor(){
-for(var i=0;i<9;i++){
-var s=document.createElement('div');
-s.className='seaweed';
-var h=30+Math.random()*40;
-s.style.width=(10+Math.random()*6)+'px';
-s.style.height=h+'px';
-s.style.left=(Math.random()*94)+'%';
-s.style.animationDuration=(2.4+Math.random()*2)+'s';
-tankEl.appendChild(s);
-}
-for(var j=0;j<4;j++){
-var r=document.createElement('div');
-r.className='rock';
-var w=30+Math.random()*40;
-r.style.width=w+'px';
-r.style.height=(w*0.6)+'px';
-r.style.left=(Math.random()*90)+'%';
-tankEl.appendChild(r);
-}
-var egg=document.createElement('div');
-egg.className='reefEgg';
-egg.textContent='🍍';
-egg.style.right='14px';
-egg.style.left='auto';
-egg.title='???';
-tankEl.appendChild(egg);
-for(var k=0;k<10;k++){
-var b=document.createElement('div');
-b.className='bubble';
-b.style.left=(Math.random()*100)+'%';
-b.style.animationDuration=(4+Math.random()*4)+'s';
-b.style.animationDelay=(Math.random()*6)+'s';
-tankEl.appendChild(b);
-}
-}
-
-function buildDex(){
-for(var i=0;i<SPECIES.length;i++){
-var card=document.createElement('div');
-card.className='dexCard locked';
-dexGridEl.appendChild(card);
-dexEntries.push(card);
-renderDexCard(i);
-}
-}
-
-function renderDexCard(i){
-var card=dexEntries[i];
-if(speciesUnlocked[i]){
-card.classList.remove('locked');
-card.innerHTML='<span class="emoji">'+SPECIES[i].emoji+'</span><span class="nm">'+SPECIES[i].name+'</span><span class="stage">최고 Lv.'+(speciesBestStage[i]+1)+'</span>';
-}else{
-card.classList.add('locked');
-card.innerHTML='<span class="emoji">❓</span><span class="nm">???</span><span class="stage"></span>';
-}
-}
-
-function createFish(stage,species){
-fishSeq++;
-var wrap=document.createElement('div');
-wrap.className='fish';
-wrap.textContent=SPECIES[species].emoji;
-var startX=20+Math.random()*Math.max(1,(tankWidth-40));
-var startY=20+Math.random()*Math.max(1,(tankHeight-40));
-wrap.style.left=startX+'px';
-wrap.style.top=startY+'px';
-wrap.onclick=function(){feedFish(f)};
-tankEl.appendChild(wrap);
-var bar=document.createElement('div');
-bar.className='growthbar';
-var fill=document.createElement('i');
-bar.appendChild(fill);
-tankEl.appendChild(bar);
-var f={id:fishSeq,stage:stage,species:species,progress:0,hunger:0,el:wrap,bar:bar,fill:fill,coinTimer:4,x:startX,y:startY,vx:(Math.random()-0.5)*1.4,vy:(Math.random()-0.5)*1.4};
-applyStageClass(f);
-positionBar(f);
-fishList.push(f);
-if(!speciesUnlocked[species]){
-speciesUnlocked[species]=true;
-unlockedCount+=1;
-if(dexEntries.length)renderDexCard(species);
-toast('도감 등록! '+SPECIES[species].name+' · 코인 보너스 +5%');
-}
-if(stage>speciesBestStage[species]){
-speciesBestStage[species]=stage;
-if(dexEntries.length)renderDexCard(species);
-}
-return f;
-}
-
-function applyStageClass(f){
-f.el.style.fontSize=sizeForStage(f.stage)+'px';
-f.bar.style.display=f.stage>=maxStage?'none':'block';
-}
-
-function positionBar(f){
-var offset=sizeForStage(f.stage)*0.5+8;
-f.bar.style.left=f.x+'px';
-f.bar.style.top=(f.y+offset)+'px';
-}
-
-function removeFish(f){
-f.el.remove();
-f.bar.remove();
-var idx=fishList.indexOf(f);
-if(idx>=0)fishList.splice(idx,1);
-}
-
-function feedFish(f){
-if(!f||!fishList.includes(f))return;
-f.hunger=0;
-f.el.classList.remove('hungry');
-f.el.classList.remove('eating');
-void f.el.offsetWidth;
-f.el.classList.add('eating');
-playFeed();
-var need=stageNeed[f.stage];
-if(need>0){
-f.progress+=feedLevel;
-f.fill.style.width=Math.min(100,(f.progress/need)*100)+'%';
-if(f.progress>=need){
-f.stage=Math.min(maxStage,f.stage+1);
-f.progress=0;
-applyStageClass(f);
-if(f.stage>speciesBestStage[f.species]){
-speciesBestStage[f.species]=f.stage;
-if(dexEntries.length)renderDexCard(f.species);
-}
-showFloatText(f.x,f.y-28,'레벨업! Lv.'+(f.stage+1),'#ffd166');
-playLevelUp();
-}
-}
-}
-
-function spawnFood(x,y){
-var el=document.createElement('div');
-el.className='food';
-el.style.left=x+'px';
-el.style.top=y+'px';
-tankEl.appendChild(el);
-fallingFoods.push({el:el,x:x,y:y});
-if(!fallHandle)fallHandle=setInterval(stepFalling,50);
-}
-
-function stepFalling(){
-for(var i=fallingFoods.length-1;i>=0;i--){
-var fo=fallingFoods[i];
-fo.y+=7;
-fo.el.style.top=fo.y+'px';
-var consumed=false;
-for(var j=0;j<fishList.length;j++){
-var f=fishList[j];
-if(Math.abs(f.x-fo.x)<38 && Math.abs(f.y-fo.y)<26){
-feedFish(f);
-consumed=true;
-break;
-}
-}
-if(consumed || fo.y>=tankHeight-10){
-fo.el.remove();
-fallingFoods.splice(i,1);
-}
-}
-if(fallingFoods.length===0 && fallHandle){
-clearInterval(fallHandle);
-fallHandle=null;
-}
-}
-
-function feedAll(){
-var count=4;
-for(var i=0;i<count;i++){
-var x=(tankWidth/(count+1))*(i+1);
-spawnFood(x,10);
-}
-}
-
-function onFeedAllClick(){
-if(!feedAllUnlocked){
-toast('상점 특별 탭에서 자동 먹이를 먼저 해금하세요');
-openShop();
-showTab('special');
-return;
-}
-feedAll();
-}
-
-function spawnCoin(f){
-var base=(5+f.stage*4)*SPECIES[f.species].mult*(1+coinBoostLevel*0.2)*dexBonus();
-var value=Math.round(base)+feedLevel*2;
-var coinEl=document.createElement('div');
-coinEl.className='coin';
-coinEl.style.left=f.x+'px';
-coinEl.style.top=Math.max(10,f.y-34)+'px';
-coinEl.onclick=function(){
-coins+=value;
-updateHud();
-showFloatText(f.x,f.y-45,'+'+value,'#ffd700');
-playCoin();
-coinEl.remove();
-};
-tankEl.appendChild(coinEl);
-setTimeout(function(){if(coinEl.parentNode)coinEl.remove()},6000);
-if(Math.random()<0.08){spawnGem(f)}
-}
-
-function spawnGem(f){
-var gemEl=document.createElement('div');
-gemEl.className='gem';
-gemEl.textContent='💎';
-gemEl.style.left=(f.x+(Math.random()*30-15))+'px';
-gemEl.style.top=Math.max(10,f.y-52)+'px';
-gemEl.onclick=function(){
-diamonds+=1;
-updateHud();
-showFloatText(f.x,f.y-62,'💎+1','#7dd3fc');
-playCoin();
-gemEl.remove();
-};
-tankEl.appendChild(gemEl);
-setTimeout(function(){if(gemEl.parentNode)gemEl.remove()},6000);
-}
-
-function applyDamage(inv){
-if(!inv||!invaders.includes(inv))return;
-inv.hp-=weaponLevel;
-if(inv.hpFill)inv.hpFill.style.width=Math.max(0,(inv.hp/inv.maxHp)*100)+'%';
-showFloatText(inv.x,inv.y-(inv.isBoss?52:26),'-'+weaponLevel,'#ff5d7a');
-playHit();
-if(inv.hp<=0){
-if(inv.isBoss){
-var reward=200+Math.floor(Math.random()*120);
-coins+=reward;
-diamonds+=5;
-showFloatText(inv.x,inv.y-64,'+'+reward,'#ffd700');
-toast('보스 처치! 🪙 +'+reward+' 💎 +5');
-playBossDefeat();
-despawnBoss(false);
-}else{
-var gain=1+diaBoostLevel;
-diamonds+=gain;
-inv.el.remove();
-inv.hpEl.remove();
-var idx=invaders.indexOf(inv);
-if(idx>=0)invaders.splice(idx,1);
-toast('침입자 처치! 💎 +'+gain);
-playKill();
-}
-updateHud();
-}
-}
-
-function spawnInvader(){
-var x,y,tries=0;
-do{
-x=30+Math.random()*Math.max(1,(tankWidth-60));
-y=30+Math.random()*Math.max(1,(tankHeight-60));
-tries++;
-}while(!farFromFish(x,y,60) && tries<12);
-var el=document.createElement('div');
-el.className='invader';
-el.textContent='👾';
-el.style.left=x+'px';
-el.style.top=y+'px';
-tankEl.appendChild(el);
-var hp=document.createElement('div');
-hp.className='hpbar';
-hp.style.width='40px';
-var fill=document.createElement('i');
-fill.style.width='100%';
-hp.appendChild(fill);
-hp.style.left=x+'px';
-hp.style.top=(y-30)+'px';
-tankEl.appendChild(hp);
-var inv={hp:3,maxHp:3,el:el,hpEl:hp,hpFill:fill,x:x,y:y,vx:(Math.random()-0.5)*0.7,vy:(Math.random()-0.5)*0.7,radius:20,isBoss:false};
-el.onclick=function(){applyDamage(inv)};
-invaders.push(inv);
-}
-
-function spawnBoss(){
-var x,y,tries=0;
-do{
-x=tankWidth*0.3+Math.random()*tankWidth*0.4;
-y=60+Math.random()*50;
-tries++;
-}while(!farFromFish(x,y,70) && tries<12);
-var el=document.createElement('div');
-el.className='boss';
-el.textContent='🛸';
-el.style.left=x+'px';
-el.style.top=y+'px';
-tankEl.appendChild(el);
-var hp=document.createElement('div');
-hp.className='hpbar';
-hp.style.width='74px';
-var fill=document.createElement('i');
-fill.style.width='100%';
-hp.appendChild(fill);
-hp.style.left=x+'px';
-hp.style.top=(y-48)+'px';
-tankEl.appendChild(hp);
-boss={hp:25,maxHp:25,el:el,hpEl:hp,hpFill:fill,x:x,y:y,timeLeft:75,vx:(Math.random()-0.5)*0.8,vy:(Math.random()-0.5)*0.8,radius:36,isBoss:true};
-el.onclick=function(){applyDamage(boss)};
-invaders.push(boss);
-toast('🛸 보스 출현!');
-}
-
-function despawnBoss(escaped){
-if(!boss)return;
-boss.el.remove();
-boss.hpEl.remove();
-var idx=invaders.indexOf(boss);
-if(idx>=0)invaders.splice(idx,1);
-if(escaped)toast('보스가 도망쳤어요');
-boss=null;
-bossCountdown=180;
-}
-
-function moveTick(){
-for(var i=fishList.length-1;i>=0;i--){
-var f=fishList[i];
-if(Math.random()<0.03){
-f.vx=(Math.random()-0.5)*1.6;
-f.vy=(Math.random()-0.5)*1.6;
-}
-f.x+=f.vx;
-f.y+=f.vy;
-if(f.x<20){f.x=20;f.vx=Math.abs(f.vx)}
-if(f.x>tankWidth-20){f.x=tankWidth-20;f.vx=-Math.abs(f.vx)}
-if(f.y<20){f.y=20;f.vy=Math.abs(f.vy)}
-if(f.y>tankHeight-20){f.y=tankHeight-20;f.vy=-Math.abs(f.vy)}
-f.el.style.left=f.x+'px';
-f.el.style.top=f.y+'px';
-f.el.style.setProperty('--dir',f.vx<0?-1:1);
-positionBar(f);
-var hit=false;
-for(var k=0;k<invaders.length;k++){
-var inv=invaders[k];
-if(Math.hypot(f.x-inv.x,f.y-inv.y)<(inv.radius||20)){hit=true;break}
-}
-if(hit){
-removeFish(f);
-toast('물고기가 침입자에게 당했어요!');
-playOuch();
-}
-}
-for(var j=0;j<invaders.length;j++){
-var inv=invaders[j];
-var r=inv.radius||20;
-if(Math.random()<0.02){
-inv.vx=(Math.random()-0.5)*(inv.isBoss?0.8:0.7);
-inv.vy=(Math.random()-0.5)*(inv.isBoss?0.8:0.7);
-}
-inv.x+=inv.vx;
-inv.y+=inv.vy;
-if(inv.x<r){inv.x=r;inv.vx=Math.abs(inv.vx)}
-if(inv.x>tankWidth-r){inv.x=tankWidth-r;inv.vx=-Math.abs(inv.vx)}
-if(inv.y<r+30){inv.y=r+30;inv.vy=Math.abs(inv.vy)}
-if(inv.y>tankHeight-r){inv.y=tankHeight-r;inv.vy=-Math.abs(inv.vy)}
-inv.el.style.left=inv.x+'px';
-inv.el.style.top=inv.y+'px';
-inv.hpEl.style.left=inv.x+'px';
-inv.hpEl.style.top=(inv.y-(inv.isBoss?48:30))+'px';
-}
-}
-
-function secondTick(){
-if(boss){
-boss.timeLeft-=1;
-if(boss.timeLeft<=0){despawnBoss(true)}
-}else{
-bossCountdown-=1;
-if(bossCountdown<=0){spawnBoss()}
-}
-if(feedAllUnlocked){
-autoFeedCounter+=1;
-if(autoFeedCounter>=autoFeedInterval){
-autoFeedCounter=0;
-feedAll();
-}
-}
-if(autoAttackUnlocked && invaders.length>0){
-applyDamage(invaders[0]);
-}
-if(boss){
-bossBarEl.textContent='🛸 보스 등장! '+fmtTime(boss.timeLeft)+' 남음';
-}else{
-bossBarEl.textContent='다음 보스까지 '+fmtTime(bossCountdown);
-}
-updateHud();
-}
-
-function tick(){
-if(fishList.length===0){
-createFish(0,0);
-toast('물고기가 없어서 한 마리를 지급했어요');
-}
-for(var i=0;i<fishList.length;i++){
-var f=fishList[i];
-f.hunger+=1;
-if(f.hunger>6)f.el.classList.add('hungry');
-if(f.hunger>40)f.hunger=40;
-if(f.stage>=1){
-f.coinTimer-=1;
-if(f.coinTimer<=0){
-spawnCoin(f);
-f.coinTimer=Math.max(2,5-Math.floor(feedLevel/2));
-}
-}
-}
-invaderTimer-=1;
-if(invaderTimer<=0 && invaders.length<maxInvaders){
-spawnInvader();
-invaderTimer=16;
-}
-updateHud();
-saveGame();
-}
-
-function updateHud(){
-coinDisplay.textContent=coins;
-diaDisplay.textContent=diamonds;
-fishDisplay.textContent=fishList.length+'/'+maxFish;
-var atCap=fishList.length>=maxFish;
-fishCostTextEl.textContent=atCap?'수조가 가득 찼어요 (최대 '+maxFish+'마리)':'구매가 '+fishCost()+'코인 · 12종 중 랜덤 지급';
-buyFishBtnEl.disabled=atCap;
-feedCostTextEl.textContent='구매가 '+feedCost()+'코인 · 성장치 +'+feedLevel+' → +'+(feedLevel+1)+' · 코인보너스 +'+(feedLevel*2)+' → +'+((feedLevel+1)*2);
-weaponCostTextEl.textContent='구매가 '+weaponCost()+'다이아 · 공격력 '+weaponLevel+' → '+(weaponLevel+1);
-coinBoostCostTextEl.textContent='구매가 '+coinBoostCost()+'코인 · 코인 배율 x'+(1+coinBoostLevel*0.2).toFixed(1)+' → x'+(1+(coinBoostLevel+1)*0.2).toFixed(1);
-diaBoostCostTextEl.textContent='구매가 '+diaBoostCost()+'다이아 · 처치보상 +'+(1+diaBoostLevel)+' → +'+(2+diaBoostLevel);
-feedUnlockCostTextEl.textContent='다이아 '+feedUnlockCost+' · 주기적으로 먹이가 자동으로 떨어져요';
-autoAttackCostTextEl.textContent='다이아 '+autoAttackCost+' · 적이 나타나면 자동으로 공격해요';
-dexBonusTextEl.textContent='도감 수집 '+unlockedCount+'/'+SPECIES.length+' · 코인 보너스 +'+(unlockedCount*5)+'%';
-feedBtnEl.textContent=feedAllUnlocked?'🍤 먹이주기':'🔒 먹이주기';
-feedBtnEl.classList.toggle('locked',!feedAllUnlocked);
-feedUnlockItemEl.style.display=feedAllUnlocked?'none':'flex';
-autoAttackItemEl.style.display=autoAttackUnlocked?'none':'flex';
-}
-
-function buyRandomFish(){
-if(fishList.length>=maxFish){toast('수조가 가득 찼어요');return}
-var cost=fishCost();
-if(coins<cost){toast('코인이 부족해요');return}
-coins-=cost;
-var idx=Math.floor(Math.random()*SPECIES.length);
-createFish(0,idx);
-updateHud();
-toast(SPECIES[idx].name+' 입양!');
-}
-
-function buyFeed(){
-var cost=feedCost();
-if(coins<cost){toast('코인이 부족해요');return}
-coins-=cost;
-feedLevel+=1;
-updateHud();
-toast('먹이 업그레이드!');
-}
-
-function buyWeapon(){
-var cost=weaponCost();
-if(diamonds<cost){toast('다이아가 부족해요');return}
-diamonds-=cost;
-weaponLevel+=1;
-updateHud();
-toast('무기 업그레이드!');
-}
-
-function buyCoinBoost(){
-var cost=coinBoostCost();
-if(coins<cost){toast('코인이 부족해요');return}
-coins-=cost;
-coinBoostLevel+=1;
-updateHud();
-toast('코인 부스트 업그레이드!');
-}
-
-function buyDiaBoost(){
-var cost=diaBoostCost();
-if(diamonds<cost){toast('다이아가 부족해요');return}
-diamonds-=cost;
-diaBoostLevel+=1;
-updateHud();
-toast('다이아 부스트 업그레이드!');
-}
-
-function buyFeedUnlock(){
-if(feedAllUnlocked)return;
-if(diamonds<feedUnlockCost){toast('다이아가 부족해요');return}
-diamonds-=feedUnlockCost;
-feedAllUnlocked=true;
-autoFeedCounter=0;
-updateHud();
-toast('자동 먹이 해금!');
-}
-
-function buyAutoAttack(){
-if(autoAttackUnlocked)return;
-if(diamonds<autoAttackCost){toast('다이아가 부족해요');return}
-diamonds-=autoAttackCost;
-autoAttackUnlocked=true;
-updateHud();
-toast('자동 공격 해금!');
-}
-
-function isShopTab(t){return t==='fish'||t==='upgrade'||t==='special'}
-
-function showTab(tab){
-activeTab=tab;
-document.getElementById('tabFishContent').style.display=tab==='fish'?'block':'none';
-document.getElementById('tabUpgradeContent').style.display=tab==='upgrade'?'block':'none';
-document.getElementById('tabSpecialContent').style.display=tab==='special'?'block':'none';
-document.getElementById('tabDexContent').style.display=tab==='dex'?'block':'none';
-document.getElementById('tabSettingsContent').style.display=tab==='settings'?'block':'none';
-subTabsEl.style.display=isShopTab(tab)?'flex':'none';
-panelTitleEl.textContent=tab==='dex'?'📖 도감':(tab==='settings'?'⚙️ 설정':'🛒 상점');
-subBtnFish.classList.toggle('active',tab==='fish');
-subBtnUpgrade.classList.toggle('active',tab==='upgrade');
-subBtnSpecial.classList.toggle('active',tab==='special');
-}
-
-function afterPanelToggle(){setTimeout(updateTankSize,280)}
-
-function openShop(){
-if(shopPanelEl.classList.contains('open') && isShopTab(activeTab)){
-shopPanelEl.classList.remove('open');
-afterPanelToggle();
-return;
-}
-shopPanelEl.classList.add('open');
-showTab('fish');
-updateHud();
-afterPanelToggle();
-}
-
-function openDex(){
-if(shopPanelEl.classList.contains('open') && activeTab==='dex'){
-shopPanelEl.classList.remove('open');
-afterPanelToggle();
-return;
-}
-shopPanelEl.classList.add('open');
-showTab('dex');
-updateHud();
-afterPanelToggle();
-}
-
-function openSettings(){
-if(shopPanelEl.classList.contains('open') && activeTab==='settings'){
-shopPanelEl.classList.remove('open');
-afterPanelToggle();
-return;
-}
-shopPanelEl.classList.add('open');
-showTab('settings');
-afterPanelToggle();
-}
-
-function closePanel(){
-shopPanelEl.classList.remove('open');
-afterPanelToggle();
-}
-
-function saveGame(){
-var data={
-coins:coins,
-diamonds:diamonds,
-feedLevel:feedLevel,
-weaponLevel:weaponLevel,
-coinBoostLevel:coinBoostLevel,
-diaBoostLevel:diaBoostLevel,
-feedAllUnlocked:feedAllUnlocked,
-autoAttackUnlocked:autoAttackUnlocked,
-soundOn:soundOn,
-speciesUnlocked:speciesUnlocked,
-speciesBestStage:speciesBestStage,
-fish:fishList.map(function(f){return {stage:f.stage,species:f.species,progress:f.progress,hunger:f.hunger,x:f.x,y:f.y}})
-};
-try{localStorage.setItem(saveKey,JSON.stringify(data))}catch(e){}
-}
-
-function loadGame(){
-var raw=null;
-try{raw=localStorage.getItem(saveKey)}catch(e){}
-if(!raw)return false;
-var data=null;
-try{data=JSON.parse(raw)}catch(e){return false}
-if(!data)return false;
-coins=data.coins||50;
-diamonds=data.diamonds||5;
-feedLevel=data.feedLevel||1;
-weaponLevel=data.weaponLevel||2;
-coinBoostLevel=data.coinBoostLevel||0;
-diaBoostLevel=data.diaBoostLevel||0;
-feedAllUnlocked=data.feedAllUnlocked||false;
-autoAttackUnlocked=data.autoAttackUnlocked||false;
-soundOn=data.soundOn===false?false:true;
-if(data.speciesUnlocked)speciesUnlocked=data.speciesUnlocked;
-if(data.speciesBestStage)speciesBestStage=data.speciesBestStage;
-for(var i=0;i<speciesUnlocked.length;i++){if(speciesUnlocked[i])unlockedCount++}
-var list=data.fish||[];
-var cap=Math.min(list.length,maxFish);
-for(var k=0;k<cap;k++){
-var saved=list[k];
-var f=createFish(saved.stage,saved.species||0);
-f.progress=saved.progress;
-f.hunger=saved.hunger;
-f.x=saved.x;
-f.y=saved.y;
-f.el.style.left=f.x+'px';
-f.el.style.top=f.y+'px';
-var need=stageNeed[f.stage];
-if(need>0)f.fill.style.width=Math.min(100,(f.progress/need)*100)+'%';
-positionBar(f);
-if(f.hunger>6)f.el.classList.add('hungry');
-}
-return true;
-}
-
-tankEl.onclick=function(e){
-if(e.target!==tankEl)return;
-var rect=tankEl.getBoundingClientRect();
-var x=e.clientX-rect.left;
-var y=e.clientY-rect.top;
-spawnFood(x,y);
-};
-
-window.onload=function(){
-updateTankSize();
-makeDecor();
-buildDex();
-var loaded=loadGame();
-if(!loaded){
-createFish(0,0);
-createFish(0,0);
-}
-soundToggleBtnEl.textContent=soundOn?'켜짐':'꺼짐';
-updateHud();
-tick();
-secondTick();
-setInterval(tick,1500);
-setInterval(moveTick,120);
-setInterval(secondTick,1000);
-};
-
-window.addEventListener('resize',updateTankSize);
+const phrases=D.map(x=>({ko:x[0],en:x[1],zh:x[2],cat:x[3],meaning:x[4],note:x[5],exampleKo:x[6],exampleEn:x[7],exampleZh:x[8]}));
+let lang='en', current='All', filtered=phrases;
+const $=id=>document.getElementById(id);
+function setLang(l){lang=l; $('enBtn').classList.toggle('active',l==='en');$('zhBtn').classList.toggle('active',l==='zh');renderUI();renderFilters();render();}
+function renderUI(){const u=UI[lang];$('title').textContent=u.title;$('subtitle').textContent=u.subtitle;$('search').placeholder=u.search;$('searchBtn').textContent=u.searchBtn;$('listTitle').textContent=u.list;$('randomBtn').textContent=u.random;$('footer').innerHTML=u.footer;['Phrases','Slang','Food','Money','Culture','Subway'].forEach(k=>{$('mod'+k).textContent=u.modules[k][0];$('mod'+k+'Sub').textContent=u.modules[k][1]});}
+function renderFilters(){const u=UI[lang];$('filters').innerHTML=['All','Phrases','Slang','Food','Money','Culture','Subway'].map(c=>`<button class="filter ${current===c?'active':''}" onclick="selectCategory('${c}')">${c==='All'?u.all:u.cats[c]}</button>`).join('');}
+function selectCategory(c){current=c; $('search').value=''; renderFilters();render();window.scrollTo({top:document.querySelector('.section-head').offsetTop-10,behavior:'smooth'});}
+function doSearch(){const q=$('search').value.trim().toLowerCase();filtered=phrases.filter(p=>[p.ko,p.en,p.zh,p.meaning,p.exampleKo,p.exampleEn,p.exampleZh].join(' ').toLowerCase().includes(q) && (current==='All'||p.cat===current));render(true);}
+function render(fromSearch=false){const u=UI[lang];let list=fromSearch?filtered:phrases.filter(p=>current==='All'||p.cat===current);filtered=list;$('count').textContent=u.count(list.length);$('cards').innerHTML=list.length?list.map((p,i)=>`<div class="card" onclick="openModal(${phrases.indexOf(p)})"><div class="ko">${p.ko}</div><div class="en">${p[lang]}</div><div class="tag">${u.cats[p.cat]}</div></div>`).join(''):`<div class="empty">${u.empty}</div>`;}
+function openModal(i){const p=phrases[i],u=UI[lang];$('mKo').textContent=p.ko;$('mAlt').textContent=p[lang];$('labelMeaning').textContent=u.meaning;$('mMeaning').textContent=p.meaning;$('labelExample').textContent=u.example;$('mExample').innerHTML=`<div style="font-size:18px;font-weight:800;margin-bottom:6px">${p.exampleKo}</div>${lang==='en'?p.exampleEn:p.exampleZh}`;$('labelNote').textContent=u.note;$('mNote').textContent=p.note;$('modal').classList.add('show');document.body.style.overflow='hidden';}
+function closeModal(){$('modal').classList.remove('show');document.body.style.overflow='';}
+function outsideClose(e){if(e.target===$('modal'))closeModal();}
+function randomPhrase(){const p=phrases[Math.floor(Math.random()*phrases.length)];openModal(phrases.indexOf(p));}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+setLang('en');
 </script>
 </body>
 </html>
